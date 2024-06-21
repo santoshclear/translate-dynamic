@@ -1,8 +1,9 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
+import io
 import sys
 from transformers import MarianMTModel, MarianTokenizer
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 def translate_text(text, src_lang="en", tgt_lang="de"):
     try:
