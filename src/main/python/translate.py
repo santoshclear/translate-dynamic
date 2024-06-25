@@ -5,7 +5,7 @@ import sys
 from transformers import MarianMTModel, MarianTokenizer
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-def translate_text(text, src_lang="en", tgt_lang="de"):
+def translate_text(text, src_lang, tgt_lang):
     try:
         model_name = f'Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}'
         tokenizer = MarianTokenizer.from_pretrained(model_name)
@@ -25,7 +25,9 @@ def translate_text(text, src_lang="en", tgt_lang="de"):
 if __name__ == "__main__":
     try:
         text_to_translate = sys.argv[1]
-        translated_text = translate_text(text_to_translate)
+        src_lang = sys.argv[2]
+        tgt_lang = sys.argv[3]
+        translated_text = translate_text(text_to_translate, src_lang, tgt_lang)
         print(translated_text)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

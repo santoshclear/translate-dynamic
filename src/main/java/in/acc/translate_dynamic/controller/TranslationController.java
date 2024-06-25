@@ -1,4 +1,5 @@
 package in.acc.translate_dynamic.controller;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -7,14 +8,12 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.apache.pdfbox.text.TextPosition;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,42 +65,35 @@ public class TranslationController {
         try (InputStream inputStream = file.getInputStream();
              PDDocument document = PDDocument.load(inputStream)) {
 
-            PDFTextStripper textStripper = new PDFTextStripper();
-            textStripper.setSortByPosition(true);
-            String originalText = textStripper.getText(document);
-            String translatedText = translateTextUsingPython(originalText, "en", targetLang);
-
             PDDocument translatedDocument = new PDDocument();
             PDType0Font font = PDType0Font.load(translatedDocument, new File("C:\\Users\\sai.sree.gudikandula\\OneDrive - Accenture\\Desktop\\python\\Noto_Sans\\static\\NotoSans_SemiCondensed-SemiBoldItalic.ttf"));
 
-            for (int pageNum = 1; pageNum <= document.getNumberOfPages(); pageNum++) {
-                PDPage originalPage = document.getPage(pageNum - 1);
-                PDPage translatedPage = new PDPage(originalPage.getMediaBox());
+            PDFTextStripper textStripper = new PDFTextStripper();
+            textStripper.setSortByPosition(true);
+
+            for (int page = 1; page <= document.getNumberOfPages(); ++page) {
+                textStripper.setStartPage(page);
+                textStripper.setEndPage(page);
+
+                String originalText = textStripper.getText(document);
+                String translatedText = translateTextUsingPython(originalText, "en", targetLang);
+
+                PDPage translatedPage = new PDPage(document.getPage(page - 1).getMediaBox());
                 translatedDocument.addPage(translatedPage);
 
-                PDFTextStripper pageStripper = new PDFTextStripper() {
-                    @Override
-                    protected void writeString(String text, List<TextPosition> textPositions) throws IOException {
-                        PDPageContentStream contentStream = new PDPageContentStream(translatedDocument, translatedPage, PDPageContentStream.AppendMode.APPEND, true, true);
-                        contentStream.setFont(font, 12);
-                        contentStream.beginText();
+                PDPageContentStream contentStream = new PDPageContentStream(translatedDocument, translatedPage);
+                contentStream.setFont(font, 12);
+                contentStream.beginText();
+                contentStream.newLineAtOffset(50, 700);
 
-                        for (TextPosition textPosition : textPositions) {
-                            String originalChar = textPosition.getUnicode();
+                String[] lines = translatedText.split("\n");
+                for (String line : lines) {
+                    contentStream.showText(line);
+                    contentStream.newLineAtOffset(0, -15); // Adjust the offset for each new line
+                }
 
-                            String translatedChar = translateTextUsingPython(originalChar, "en", targetLang);
-                            contentStream.newLineAtOffset(textPosition.getXDirAdj(), textPosition.getYDirAdj());
-                            contentStream.showText(translatedChar);
-                        }
-
-                        contentStream.endText();
-                        contentStream.close();
-                    }
-                };
-
-                pageStripper.setStartPage(pageNum);
-                pageStripper.setEndPage(pageNum);
-                pageStripper.getText(document);
+                contentStream.endText();
+                contentStream.close();
             }
 
             translatedDocument.save("translated.pdf");
