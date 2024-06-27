@@ -5,9 +5,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,26 +31,22 @@ public class TranslationController {
                 // Replace text in runs to maintain formatting
                 List<XWPFRun> runs = paragraph.getRuns();
                 if (runs != null) {
-                    int startRun = 0;
                     int textIndex = 0;
                     for (XWPFRun run : runs) {
                         String runText = run.toString();
                         int runLength = runText.length();
                         if (textIndex + runLength > translatedText.length()) {
                             run.setText(translatedText.substring(textIndex), 0);
-                            textIndex += runLength;
+                            break;
                         } else {
                             run.setText(translatedText.substring(textIndex, textIndex + runLength), 0);
                             textIndex += runLength;
                         }
-                        startRun++;
-                    }
-                    while (startRun < runs.size()) {
-                        paragraph.removeRun(startRun);
                     }
                 }
             }
 
+            // Save the translated document to a dynamic path or return as response
             try (FileOutputStream out = new FileOutputStream("translated.docx")) {
                 document.write(out);
             }
@@ -66,7 +60,7 @@ public class TranslationController {
              PDDocument document = PDDocument.load(inputStream)) {
 
             PDDocument translatedDocument = new PDDocument();
-            PDType0Font font = PDType0Font.load(translatedDocument, new File("C:\\Users\\sai.sree.gudikandula\\OneDrive - Accenture\\Desktop\\python\\Noto_Sans\\static\\NotoSans_SemiCondensed-SemiBoldItalic.ttf"));
+            PDType0Font font = PDType0Font.load(translatedDocument, new File("C:\\path\\to\\your\\font.ttf"));
 
             PDFTextStripper textStripper = new PDFTextStripper();
             textStripper.setSortByPosition(true);
