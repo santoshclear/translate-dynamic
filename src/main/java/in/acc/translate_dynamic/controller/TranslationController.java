@@ -5,6 +5,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -14,18 +15,56 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.geom.Rectangle2D;
 import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 public class TranslationController {
 
+    // Endpoint to handle plain text translation
+    @PostMapping("/translate-text")
+    public Map<String, String> translateText(@RequestBody Map<String, String> request) throws IOException {
+        String text = request.get("text");
+        String targetLang = request.get("targetLang");
+        String translatedText = translateTextUsingPython(text, "en", targetLang);
+        return Map.of("translatedText", translatedText);
+    }
+    @PostMapping("/translate-page")
+    public List<String> translatePage(@RequestBody Map<String, Object> request) throws IOException {
+        System.out.println("Received translate-page request with data: " + request);
+
+        List<String> texts = (List<String>) request.get("texts");
+        String targetLang = (String) request.get("targetLang");
+
+        List<String> translatedTexts = texts.stream()
+                .map(text -> {
+                    try {
+                        String translated = translateTextUsingPython(text, "en", targetLang);
+                        System.out.println("Original text: " + text + ", Translated text: " + translated);
+                        return translated;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return text; // Return the original text in case of an error
+                    }
+                })
+                .collect(Collectors.toList());
+
+        System.out.println("Translated texts: " + translatedTexts);
+        return translatedTexts;
+    }
+
+    // Endpoint to handle DOCX file translation
     @PostMapping("/translate-docx")
     public void translateDocx(@RequestParam("file") MultipartFile file,
                               @RequestParam("targetLang") String targetLang) throws IOException {
@@ -54,13 +93,12 @@ public class TranslationController {
                 }
             }
 
-            // Save the translated document to a dynamic path or return as response
+            // Save the translated document to a file
             try (FileOutputStream out = new FileOutputStream("translated.docx")) {
                 document.write(out);
             }
         }
     }
-
     @PostMapping("/translate-pdf")
     public void translatePdf(@RequestParam("file") MultipartFile file,
                              @RequestParam("targetLang") String targetLang) throws IOException {
@@ -128,6 +166,7 @@ public class TranslationController {
         }
     }
 
+    // Helper method to call Python script for text translation
     private String translateTextUsingPython(String text, String srcLang, String tgtLang) throws IOException {
         final String PYTHON_PATH = "python"; // or the path to your Python interpreter
         final String SCRIPT_PATH = "C:\\Users\\sai.sree.gudikandula\\OneDrive - Accenture\\Desktop\\New folder (2)\\translate-dynamic\\src\\main\\python\\translate.py"; // Absolute path to your Python script

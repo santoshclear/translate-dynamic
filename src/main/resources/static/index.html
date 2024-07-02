@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Translator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<h1>Text Translator</h1>
+<form id="translateForm">
+    <textarea id="textInput" rows="10" cols="50" placeholder="Enter text to translate..."></textarea><br>
+    <button type="button" onclick="translateText()">Translate</button>
+</form>
+<h2>Translated Text</h2>
+<p id="translatedText"></p>
+
+<script>
+    async function translateText() {
+        const textInput = document.getElementById('textInput').value;
+        const targetLang = 'es'; // Change this to the target language code as needed
+        const response = await fetch('/translate-text', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: textInput, targetLang: targetLang })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('translatedText').innerText = data.translatedText;  // Adjust this line to match your API response
+        } else {
+            console.error('Translation failed', response.statusText);
+        }
+    }
+</script>
+</body>
+</html>
