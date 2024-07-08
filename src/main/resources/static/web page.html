@@ -33,7 +33,7 @@
             background: lavender;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+            box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
             opacity: 0.9;
             display: flex;
             flex-direction: column;
@@ -100,12 +100,28 @@
             align-items: center;
             gap: 20px;
         }
+
+        .loader {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #3498db; /* Blue border for spinner */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite; /* Animation for spinning */
+            display: none; /* Initially hidden */
+            margin-right: 10px; /* Adjusted spacing */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="dropdown">
-        <label for="languageSelect">Choose language:</label>
+        <label id="languageLabel" for="languageSelect">Choose language:</label>
         <select id="languageSelect" onchange="translatePage()">
             <option value="select">Select</option>
             <option value="fr">French</option>
@@ -147,11 +163,12 @@
         <div class="links">
             <a href="https://translate.google.com/">Google Translate</a>
             <a href="https://www.deepl.com/translator/">DeepL Translator</a>
-            <a href=" https://translator.microsoft.com/">Microsoft Translator</a>
-            <a href=" https://www.bing.com/translator">Bing Microsoft Translator</a>
+            <a href="https://translator.microsoft.com/">Microsoft Translator</a>
+            <a href="https://www.bing.com/translator">Bing Microsoft Translator</a>
         </div>
         <p>Google Translate (C): Offers extensive language support, text, speech, and image translations. It integrates with various Google services and provides API access for developers.</p>
         <button>Read more</button>
+        <div class="loader" id="loader"></div> <!-- Loading spinner -->
     </div>
 </div>
 
@@ -161,6 +178,10 @@
     const targetLang = languageSelect.value;
     const contentDiv = document.getElementById('content');
     const textNodes = getTextNodes(contentDiv);
+
+    // Show loader while translating
+        const loader = document.getElementById('loader');
+        loader.style.display = 'inline-block'; // Display inline with dropdown
 
     try {
         const response = await fetch('/translate-page', {
@@ -183,21 +204,23 @@
         });
     } catch (error) {
         console.error('Error during translation:', error);
+            } finally {
+            // Hide loader after translation completes or on error
+            loader.style.display = 'none';
+        }
     }
-}
 
-function getTextNodes(node) {
-    let textNodes = [];
-    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-        textNodes.push(node);
-    } else {
-        node.childNodes.forEach(child => {
-            textNodes = textNodes.concat(getTextNodes(child));
-        });
+    function getTextNodes(node) {
+        let textNodes = [];
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+            textNodes.push(node);
+        } else {
+            node.childNodes.forEach(child => {
+                textNodes = textNodes.concat(getTextNodes(child));
+            });
+        }
+        return textNodes;
     }
-    return textNodes;
-}
-
 </script>
 </body>
 </html>
