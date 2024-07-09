@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class TranslationService {
+    private String currentSrcLang = "en";
     private static final Logger logger = LoggerFactory.getLogger(TranslationService.class);
 
     public Map<String, String> translateText(Map<String, String> request) throws IOException {
@@ -43,11 +44,13 @@ public class TranslationService {
         logger.info("Translating page...");
         List<String> texts = (List<String>) request.get("texts");
         String targetLang = (String) request.get("targetLang");
+        String srcLang = currentSrcLang;
+        logger.info("Source language set to {}", srcLang);
 
         List<String> translatedTexts = texts.stream()
                 .map(text -> {
                     try {
-                        String translated = translateTextUsingPython(text, "en", targetLang);
+                        String translated = translateTextUsingPython(text, srcLang, targetLang);
                         System.out.println("Original text: " + text + ", Translated text: " + translated);
                         return translated;
 
@@ -58,10 +61,8 @@ public class TranslationService {
                 })
                 .collect(Collectors.toList());
         System.out.println("Page translation completed");
-
-        logger.info("Source language is changing to {}", targetLang);
-        String srcLang = targetLang; // Set selected target language as source language
-        logger.info("Source language is now set to {}", srcLang);
+        currentSrcLang = targetLang;
+        logger.info("Source language is now set to {}", currentSrcLang);
         return translatedTexts;
     }
 
