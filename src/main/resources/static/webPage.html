@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Page Translation</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Navigation Buttons */
+        .navigation {
+            text-align: left;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .navigation button {
+            background-color: Green;
+            color: white;
+            border: none;
+            padding: 3px 6px;
+            font-size: 10px;
+            border-radius: 2px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .navigation button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        .form-group {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .dropdown {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .dropdown select,
+        .form-control-file {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .dropdown label {
+            font-size: 16px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: #fff;
+            margin-top: 15px;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            color: #fff;
+            display: none;
+        }
+
+        .loader {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin-top: 15px;
+        }
+
+        .status-message {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+    </style>
+</head>
+<body>
+<div class="nav-bar">
+    <button onclick="location.href='http://localhost:8080/index.html'">Text Translation</button>
+    <button onclick="location.href='http://localhost:8080/documentUpload.html'">Document Translation</button>
+</div>
+
+<div class="container">
+    <h1>Web Page Translation</h1>
+    <div id="content">
+        <p>Effortless, Accurate Translations at Your Fingertips</p>
+        <p>In today's interconnected world, effective communication across languages is more important than ever. Our translation service is designed to bridge the gap, providing seamless translations with just a few clicks.</p>
+
+        <h2>Why Choose Us?</h2>
+        <ul>
+            <li><strong>Multilingual Support:</strong> We offer translations in a wide range of languages, ensuring that you can communicate effortlessly no matter where you are or who you’re speaking to.</li>
+            <li><strong>High-Quality Translations:</strong> Our advanced translation engine ensures accuracy and context-aware translations, so you can be confident that your message is conveyed precisely.</li>
+            <li><strong>User-Friendly Interface:</strong> Simply select your source and target languages, enter your text, and receive your translation instantly. Our intuitive platform makes the process quick and easy.</li>
+            <li><strong>Secure and Confidential:</strong> We prioritize your privacy. All translations are handled with the utmost confidentiality, ensuring your data is safe and secure.</li>
+        </ul>
+
+        <h2>Perfect for Every Need</h2>
+        <p>Whether you need to translate a document for business, a personal message, or a website, our service is equipped to handle it all. Our translations are perfect for:</p>
+        <ul>
+            <li><strong>Business Communications:</strong> Expand your reach and effectively communicate with international partners and clients.</li>
+            <li><strong>Travel:</strong> Break down language barriers and navigate new places with ease.</li>
+            <li><strong>Education:</strong> Access and share knowledge across different languages.</li>
+            <li><strong>Personal Use:</strong> Communicate with friends and family in their native language.</li>
+        </ul>
+
+        <h2>Get Started Today!</h2>
+        <p>Experience the ease and efficiency of our translation service. Start translating now and connect with the world like never before.</p>
+
+        <div class="image-container">
+            <img src="https://www.atanet.org/wp-content/uploads/2021/04/Guide-to-Starting-Out-as-a-Translator.png" alt="Sample Image">
+        </div>
+
+        <div class="links">
+        </div>
+        <p>Google Translate (C): Offers extensive language support, text, speech, and image translations. It integrates with various Google services and provides API access for developers.</p>
+        <button>Read more</button>
+    </div>
+</div>
+
+<script>
+    async function translatePage() {
+        const languageSelect = document.getElementById('languageSelect');
+        const targetLang = languageSelect.value;
+        const contentDiv = document.getElementById('content');
+        const textNodes = getTextNodes(contentDiv);
+
+        // Disable the entire container and show the loader while translating
+        const loader = document.getElementById('loader');
+        const container = document.querySelector('.container');
+        container.classList.add('disabled');
+        loader.style.display = 'inline-block';
+
+        try {
+            const response = await fetch('/translate-page', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ texts: textNodes.map(node => node.nodeValue), targetLang })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const translatedTexts = await response.json();
+            textNodes.forEach((node, index) => {
+                if (translatedTexts[index]) {
+                    node.nodeValue = translatedTexts[index];
+                }
+            });
+        } catch (error) {
+            console.error('Error during translation:', error);
+        } finally {
+            // Enable the container and hide the loader after translation completes or on error
+            container.classList.remove('disabled');
+            loader.style.display = 'none';
+        }
+    }
+
+    function getTextNodes(node) {
+        let textNodes = [];
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+            textNodes.push(node);
+        } else {
+            node.childNodes.forEach(child => {
+                textNodes = textNodes.concat(getTextNodes(child));
+            });
+        }
+        return textNodes;
+    }
+</script>
+</body>
+</html>
