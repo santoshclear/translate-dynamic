@@ -31,7 +31,7 @@
         /* Navigation Buttons */
         .nav-bar {
             position: absolute;
-            top: 10px;
+            top: 5px;
             left: 10px;
         }
 
@@ -39,8 +39,8 @@
             background-color: Green;
             color: white;
             border: none;
-            padding: 3px 6px;
-            font-size: 10px;
+            padding: 2px 5px;
+            font-size: 9px;
             border-radius: 2px;
             cursor: pointer;
             margin-right: 10px;
@@ -50,11 +50,12 @@
             background-color: #0056b3; /* Darker blue on hover */
         }
         .container {
-            width: 100%;
+            width: 60%;
+            max-width: 800px;
             background: lavender;
-            padding: 30px;
+            padding: 50px;
             border-radius: 10px;
-            box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+            box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
             opacity: 0.9;
             display: flex;
             flex-direction: column;
@@ -103,7 +104,7 @@
         #content button {
             background-color: #616161;
             color: white;
-            padding: 5px 10px;
+            padding: 3px 6px;
             border: none;
         }
 
@@ -112,14 +113,14 @@
             font-weight: 700;
             font-style: normal;
             color: #0c264e;
-            font-size: 60px;
+            font-size: 45px;
         }
 
         .links {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
         }
 
         .loader {
@@ -137,11 +138,16 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .disabled {
+            pointer-events:none;
+            opacity:0.5;
+        }
+
     </style>
 </head>
 <body>
 <div class="nav-bar">
-    <button onclick="location.href='http://localhost:8080/index.html'">Text Translation</button>
+    <button onclick="location.href='http://localhost:8080/index.html'">Home Page</button>
     <button onclick="location.href='http://localhost:8080/documentUpload.html'">Document Translation</button>
 </div>
 <div class="container">
@@ -204,9 +210,10 @@
         const contentDiv = document.getElementById('content');
         const textNodes = getTextNodes(contentDiv);
 
-        // Disable the dropdown and show the loader while translating
+        // Disable the entire container and show the loader while translating
         const loader = document.getElementById('loader');
-        languageSelect. Disabled = true;
+        const loader = document.querySelector('.container');
+        container.classList.add('disabled');
         loader.style.display = 'inline-block'; // Display inline with dropdown
 
         try {
@@ -232,7 +239,7 @@
             console.error('Error during translation:', error);
         } finally {
             // Enable the dropdown and hide the loader after translation completes or on error
-            languageSelect. Disabled = false;
+            container.classList.remove('disabled');
             loader.style.display = 'none';
         }
     }
