@@ -1,6 +1,7 @@
 package in.acc.translate_dynamic.service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.juli.logging.Log;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -10,24 +11,27 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.pdfbox.text.PDFTextStripperByArea;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.geom.Rectangle2D;
 import java.io.*;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class TranslationService {
-    private String currentSrcLang = "en";
+    private String currentSrcLang = "en"; // Initialize to English
+
+    //    private Log logger;
     private static final Logger logger = LoggerFactory.getLogger(TranslationService.class);
 
+    //translateText
     public Map<String, String> translateText(Map<String, String> request) throws IOException {
 
         logger.info("Translating text...");
@@ -44,6 +48,8 @@ public class TranslationService {
         logger.info("Translating page...");
         List<String> texts = (List<String>) request.get("texts");
         String targetLang = (String) request.get("targetLang");
+
+        // Use the current source language
         String srcLang = currentSrcLang;
         logger.info("Source language set to {}", srcLang);
 
@@ -53,7 +59,6 @@ public class TranslationService {
                         String translated = translateTextUsingPython(text, srcLang, targetLang);
                         System.out.println("Original text: " + text + ", Translated text: " + translated);
                         return translated;
-
                     } catch (IOException e) {
                         logger.error("Error translating text: {}", e.getMessage());
                         return text; // Return the original text in case of an error
@@ -61,13 +66,18 @@ public class TranslationService {
                 })
                 .collect(Collectors.toList());
         System.out.println("Page translation completed");
+
+        // Update the source language to the target language for future use
         currentSrcLang = targetLang;
         logger.info("Source language is now set to {}", currentSrcLang);
+
         return translatedTexts;
     }
 
+    // Method to translate DOCX files
+    public byte[] translateDocx(MultipartFile file, String targetLang) throws IOException {
+        logger.info("Translating DOCX file to {}", targetLang);
 
-    public void translateDocx(MultipartFile file, String targetLang) throws IOException {
         try (InputStream inputStream = file.getInputStream();
              XWPFDocument document = new XWPFDocument(inputStream)) {
 
@@ -77,6 +87,7 @@ public class TranslationService {
 
                 List<XWPFRun> runs = paragraph.getRuns();
                 if (runs != null) {
+                    int startRun = 0;
                     int textIndex = 0;
                     for (XWPFRun run : runs) {
                         String runText = run.toString();
@@ -92,88 +103,108 @@ public class TranslationService {
                 }
             }
 
-            try (FileOutputStream out = new FileOutputStream("translated.docx")) {
-                document.write(out);
-            }
+            // Convert the modified document to bytes
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            document.write(outputStream);
+            return outputStream.toByteArray();
         }
     }
 
-    public void translatePdf(MultipartFile file, String targetLang) throws IOException {
-        try (InputStream inputStream = file.getInputStream();
-             PDDocument document = PDDocument.load(inputStream)) {
 
+    public byte[] translatePdf(MultipartFile file, String targetLang) throws IOException {
+        try (InputStream inputStream = file.getInputStream();
+             PDDocument originalDocument = PDDocument.load(inputStream)) {
+
+            // Create a new PDF document for the translated content
             PDDocument translatedDocument = new PDDocument();
-            PDType0Font font = PDType0Font.load(translatedDocument, new File("C:\\Users\\sai.sree.gudikandula\\OneDrive - Accenture\\Desktop\\python\\Noto_Sans\\static\\NotoSans_SemiCondensed-SemiBoldItalic.ttf"));
+
+            // Define a font for the translated text
+            PDType0Font font = PDType0Font.load(translatedDocument, new File("C:\\path\\to\\your\\font.ttf"));
 
             PDFTextStripper textStripper = new PDFTextStripper();
             textStripper.setSortByPosition(true);
 
-            for (int page = 1; page <= document.getNumberOfPages(); ++page) {
-                PDPage originalPage = document.getPage(page - 1);
+            // Iterate through each page in the original document
+            for (int page = 1; page <= originalDocument.getNumberOfPages(); ++page) {
+                PDPage originalPage = originalDocument.getPage(page - 1);
                 PDPage translatedPage = new PDPage(originalPage.getMediaBox());
                 translatedDocument.addPage(translatedPage);
 
+                // Extract text from the current page
                 textStripper.setStartPage(page);
                 textStripper.setEndPage(page);
+                String originalText = textStripper.getText(originalDocument);
 
-                String originalText = textStripper.getText(document);
+                // Translate the extracted text
                 String translatedText = translateTextUsingPython(originalText, "en", targetLang);
 
-                PDPageContentStream contentStream = new PDPageContentStream(translatedDocument, translatedPage, PDPageContentStream.AppendMode.APPEND, true, true);
-                contentStream.setFont(font, 12);
-
-                PDFTextStripperByArea stripper = new PDFTextStripperByArea();
-                stripper.setSortByPosition(true);
-
-                Rectangle2D region = new Rectangle2D.Double(0, 0, originalPage.getMediaBox().getWidth(), originalPage.getMediaBox().getHeight());
-                stripper.addRegion("region", region);
-                stripper.extractRegions(originalPage);
-
-                String regionText = stripper.getTextForRegion("region");
-                String[] lines = regionText.split("\n");
-
-                contentStream.beginText();
-                contentStream.newLineAtOffset(50, 700);
-
-                for (String line : lines) {
-                    contentStream.showText(line);
-                    contentStream.newLineAtOffset(0, -15);
+                // Draw the translated text on the new page
+                try (PDPageContentStream contentStream = new PDPageContentStream(translatedDocument, translatedPage, PDPageContentStream.AppendMode.APPEND, true, true)) {
+                    contentStream.setFont(font, 12);
+                    contentStream.beginText();
+                    contentStream.newLineAtOffset(50, translatedPage.getMediaBox().getHeight() - 50);
+                    for (String line : translatedText.split("\n")) {
+                        contentStream.showText(line);
+                        contentStream.newLineAtOffset(0, -15); // Adjust line spacing as needed
+                    }
+                    contentStream.endText();
                 }
 
-                contentStream.endText();
-                contentStream.close();
-
+                // Handle images
                 PDResources pageResources = originalPage.getResources();
                 for (COSName xObjectName : pageResources.getXObjectNames()) {
                     PDXObject xObject = pageResources.getXObject(xObjectName);
                     if (xObject instanceof PDImageXObject) {
                         PDImageXObject image = (PDImageXObject) xObject;
-                        PDPageContentStream imageContentStream = new PDPageContentStream(translatedDocument, translatedPage, PDPageContentStream.AppendMode.APPEND, true, true);
-                        imageContentStream.drawImage(image, 50, 700, image.getWidth(), image.getHeight());
-                        imageContentStream.close();
+                        try (PDPageContentStream imageContentStream = new PDPageContentStream(translatedDocument, translatedPage, PDPageContentStream.AppendMode.APPEND, true, true)) {
+                            imageContentStream.drawImage(image, 50, 50, image.getWidth(), image.getHeight());
+                        }
                     }
                 }
             }
 
-            translatedDocument.save("translated.pdf");
+            // Convert the translated document to bytes
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            translatedDocument.save(outputStream);
             translatedDocument.close();
+            return outputStream.toByteArray();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error translating PDF", e);
+            throw new IOException("Error translating PDF", e);
         }
     }
 
-    private String translateTextUsingPython(String text, String srcLang, String tgtLang) throws IOException {
-        final String PYTHON_PATH = "python";
-        final String SCRIPT_PATH = "C:\\Users\\sai.sree.gudikandula\\OneDrive - Accenture\\Desktop\\New folder (2)\\translate-dynamic\\src\\main\\python\\translate.py";
 
-        ProcessBuilder processBuilder = new ProcessBuilder(PYTHON_PATH, SCRIPT_PATH, text, srcLang, tgtLang);
-        processBuilder.redirectErrorStream(true);
-        Process process = processBuilder.start();
+    public String translateTextUsingPython(String text, String srcLang, String tgtLang) throws IOException {
+        // Call the Python script with dynamic source and target languages
+        ProcessBuilder pb = new ProcessBuilder("python", "C:\\Users\\s.kumar.valaboju\\code\\dev\\translate-1\\translate-dynamic\\src\\main\\python\\translate.py", text, srcLang, tgtLang);
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-            return reader.lines().collect(Collectors.joining("\n"));
-        } finally {
-            process.destroy();
+        // Set the HF_HUB_DISABLE_SYMLINKS_WARNING environment variable
+        Map<String, String> env = pb.environment();
+        env.put("HF_HUB_DISABLE_SYMLINKS_WARNING", "1");
+
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        // Capture the output
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        StringBuilder output = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            if (!line.contains("UserWarning")) {  // Filter out UserWarning lines
+                output.append(line);
+            }
         }
+
+        // Wait for the process to complete
+        try {
+            process.waitFor();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Translation process was interrupted", e);
+        }
+
+        return output.toString().trim();
     }
+
 }

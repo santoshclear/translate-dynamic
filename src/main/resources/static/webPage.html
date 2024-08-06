@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Translation Web Page</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bona+Nova+SC:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-image: url(https://4606280.fs1.hubspotusercontent-na1.net/hubfs/4606280/world%20languages%20for%20web%20translation.jpg);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Navigation Buttons */
+            .nav-bar {
+                position: absolute;
+                top: 15px;
+                left: 10px;
+            }
+
+            .nav-bar button {
+                background-color: Green;
+                color: white;
+                border: none;
+                padding: 2px 5px;
+                font-size: 9px;
+                border-radius: 2px;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+
+            .nav-bar button:hover {
+                background-color: #0056b3; /* Darker blue on hover */
+            }
+        .container {
+            width: 100%;
+            background: lavender;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: rgba(255, 255, 255, 0.1) 0px 1px 0px inset, rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px;
+            opacity: 0.9;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+
+        .dropdown {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 3px;
+        }
+
+        .dropdown select {
+            border-radius: 5px;
+            padding: 2px;
+        }
+
+        .dropdown label {
+            margin-top: 7px;
+            font-size: 20px;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .image-container img {
+            max-width: 50%;
+            height: auto;
+        }
+
+        #content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #content button {
+            background-color: #616161;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+        }
+
+        #content h1 {
+            font-family: "Bona Nova SC", serif;
+            font-weight: 700;
+            font-style: normal;
+            color: #0c264e;
+            font-size: 60px;
+        }
+
+        .links {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .loader {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #3498db; /* Blue border for spinner */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite; /* Animation for spinning */
+            display: none; /* Initially hidden */
+            margin-right: 10px; /* Adjusted spacing */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+<div class="nav-bar">
+  <button onclick="location.href='http://localhost:8080/index.html'">Home page</button>
+  <button onclick="location.href='http://localhost:8080/documentUpload.html'">Document Translation</button>
+</div>
+<div class="container">
+  <div class="dropdown">
+    <label id="languageLabel" for="languageSelect">Choose language:</label>
+    <select id="languageSelect" onchange="translatePage()">
+      <option value="select">Select</option>
+      <option value="fr">French</option>
+      <option value="es">Spanish</option>
+      <option value="de">German</option>
+      <option value="zh">Chinese</option>
+      <option value="ru">Russian</option>
+    </select>
+  </div>
+  <div class="loader" id="loader"></div> <!-- Loading spinner -->
+  <div id="content">
+    <h1>Translation Website</h1>
+    <p>Effortless, Accurate Translations at Your Fingertips</p>
+    <p>In today's interconnected world, effective communication across languages is more important than ever. Our translation service is designed to bridge the gap, providing seamless translations with just a few clicks.</p>
+
+    <h2>Why Choose Us?</h2>
+    <ul>
+      <li><strong>Multilingual Support:</strong> We offer translations in a wide range of languages, ensuring that you can communicate effortlessly no matter where you are or who you’re speaking to.</li>
+      <li><strong>High-Quality Translations:</strong> Our advanced translation engine ensures accuracy and context-aware translations, so you can be confident that your message is conveyed precisely.</li>
+      <li><strong>User-Friendly Interface:</strong> Simply select your source and target languages, enter your text, and receive your translation instantly. Our intuitive platform makes the process quick and easy.</li>
+      <li><strong>Secure and Confidential:</strong> We prioritize your privacy. All translations are handled with the utmost confidentiality, ensuring your data is safe and secure.</li>
+    </ul>
+
+    <h2>Perfect for Every Need</h2>
+    <p>Whether you need to translate a document for business, a personal message, or a website, our service is equipped to handle it all. Our translations are perfect for:</p>
+    <ul>
+      <li><strong>Business Communications:</strong> Expand your reach and effectively communicate with international partners and clients.</li>
+      <li><strong>Travel:</strong> Break down language barriers and navigate new places with ease.</li>
+      <li><strong>Education:</strong> Access and share knowledge across different languages.</li>
+      <li><strong>Personal Use:</strong> Communicate with friends and family in their native language.</li>
+    </ul>
+
+    <h2>Get Started Today!</h2>
+    <p>Experience the ease and efficiency of our translation service. Start translating now and connect with the world like never before.</p>
+
+    <div class="image-container">
+      <img src="https://www.atanet.org/wp-content/uploads/2021/04/Guide-to-Starting-Out-as-a-Translator.png" alt="Sample Image">
+    </div>
+
+    <div class="links">
+      <a href="https://translate.google.com/">Google Translate</a>
+      <a href="https://www.deepl.com/translator/">DeepL Translator</a>
+      <a href="https://translator.microsoft.com/">Microsoft Translator</a>
+      <a href="https://www.bing.com/translator">Bing Microsoft Translator</a>
+    </div>
+    <p>Google Translate (C): Offers extensive language support, text, speech, and image translations. It integrates with various Google services and provides API access for developers.</p>
+    <button>Read more</button>
+  </div>
+</div>
+
+<script>
+    async function translatePage() {
+        const languageSelect = document.getElementById('languageSelect');
+        const targetLang = languageSelect.value;
+        const contentDiv = document.getElementById('content');
+        const textNodes = getTextNodes(contentDiv);
+
+        // Disable the entire container and show the loader while translating
+        const loader = document.getElementById('loader');
+        const container = document.querySelector('.container');
+        container.classList.add('disabled');
+        loader.style.display = 'inline-block';
+
+        try {
+            const response = await fetch('/translate-page', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ texts: textNodes.map(node => node.nodeValue), targetLang })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const translatedTexts = await response.json();
+            textNodes.forEach((node, index) => {
+                if (translatedTexts[index]) {
+                    node.nodeValue = translatedTexts[index];
+                }
+            });
+        } catch (error) {
+            console.error('Error during translation:', error);
+        } finally {
+            // Enable the container and hide the loader after translation completes or on error
+            container.classList.remove('disabled');
+            loader.style.display = 'none';
+        }
+    }
+
+    function getTextNodes(node) {
+        let textNodes = [];
+        if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+            textNodes.push(node);
+        } else {
+            node.childNodes.forEach(child => {
+                textNodes = textNodes.concat(getTextNodes(child));
+            });
+        }
+        return textNodes;
+    }
+</script>
+</body>
+</html>
